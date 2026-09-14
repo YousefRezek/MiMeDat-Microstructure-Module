@@ -2,16 +2,13 @@ cff-version: 1.2.0
 message: "If you use this schema, please cite it as below and cite the related publication."
 type: dataset
 title: "MiMeDat Microstructure Module – JSON Schema for microstructure evolution data"
-version: 1.1.0
+version: 1.0.0
 date-released: 2026-09-14
 license: CC-BY-4.0
 repository-code: "https://github.com/YousefRezek/MiMeDat-Microstructure-Module"
 authors:
   - family-names: Rezek
     given-names: Yousef
-    affiliation: "ICAMS, Ruhr University Bochum"
-  - family-names: Shoghi
-    given-names: Ronak
     affiliation: "ICAMS, Ruhr University Bochum"
   - family-names: Hartmaier
     given-names: Alexander

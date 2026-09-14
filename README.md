@@ -12,14 +12,9 @@ MiMeDat – Microstructure Module
 
 <p align="center">
   <strong>Part of the MiMeDat schema.</strong><br>
-  For the complete workflow-centric data-object schema (User, System, Job, Property, Microstructure), see the main
+  For the complete schema (User, System, Job, Property, Microstructure), see the main
   <a href="https://github.com/Ronakshoghi/MiMeDat">MiMeDat</a> repository.
 </p>
-
-* Author: Yousef Rezek
-* Organization: ICAMS (Interdisciplinary Centre for Advanced Materials Simulation), Ruhr University Bochum, Germany
-* Contact: [yousef.rezek@ruhr-uni-bochum.de](mailto:yousef.rezek@ruhr-uni-bochum.de)
-* Schema version: **1.1.0** — see [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -67,13 +62,13 @@ microstructure  (array of snapshots, ordered by time_point)
 
 # Data model
 
-Obligation: **M** mandatory, **O** optional. Units are declared in the `units` block of the enclosing data object (length, angle, stress, time); volumes are in the cube of the length unit.
+Obligation: **M** mandatory, **O** optional. Units are declared in the `units` block of the enclosing data object.
 
 ### Snapshot
 
 | Field | Obligation | Type | Description |
 |---|---|---|---|
-| `microstructure_state_id` | O (conditional) | string `S_` + 8 hex | Identifier of a selected simulation-ready state. Only snapshots with `grid.status = "undeformed"` may carry it (enforced by the schema). See [docs/identifier_convention.md](docs/identifier_convention.md). |
+| `microstructure_state_id` | O (conditional) | string `S_` + 8 hex | Identifier of a selected simulation-ready state. Only snapshots with `grid.status = "undeformed"` may carry it. |
 | `time_point` | M | number ≥ 0 | Cumulative physical time from the start of the simulation; does not reset between load steps. A recovered snapshot shares the `time_point` of the deformed snapshot it was derived from. |
 | `grid` | M | object | Spatial frame (below). |
 | `grains` | O | array | Constituent-level description (below). |
@@ -91,27 +86,25 @@ Obligation: **M** mandatory, **O** optional. Units are declared in the `units` b
 
 | Field | Obligation | Type | Description |
 |---|---|---|---|
-| `grain_id` | M | int ≥ 1 | Unique within the snapshot; preserved across snapshots wherever the grain persists. |
-| `phase_id` | M | int ≥ 0 | Phase of the grain; must match a phase defined in the Job entity. |
+| `grain_id` | M | int | Unique within the snapshot; preserved across snapshots wherever the grain persists. |
+| `phase_id` | M | int | Phase of the grain. |
 | `orientation` | M | [φ1, Φ, φ2] | Representative Bunge–Euler angles in the dataset angle unit. |
-| `grain_volume` | O | number | Grain volume. |
-| `parent_grain_id` | O | int \| int[] | Parent grain(s) in the preceding snapshot; included when grain evolution (nucleation, merging, subdivision) is tracked. Unpopulated for the first snapshot. |
+| `grain_volume` | O | number | Grain volume in the dataset volume unit. |
+| `parent_grain_id` | O | int \| int[] | Parent grain(s) in the preceding snapshot; included when grain evolution (nucleation, merging, subdivision) is tracked. |
 
 ### Voxels (each entry)
 
 | Field | Obligation | Type | Description |
 |---|---|---|---|
-| `voxel_id` | M | int ≥ 1 | Unique within the snapshot. |
-| `grain_id` | O (conditional) | int ≥ 1 | Present when the `grains` array is included; absent otherwise (enforced by the schema). |
-| `phase_id` | M | int ≥ 0 | Phase of the voxel (denormalized so the phase is available without the grains array). |
-| `centroid_coordinates` | M | [x, y, z] | Centroid position in the reference configuration of the grid. |
-| `voxel_index` | M | [i, j, k] | 1-based integer grid indices. |
+| `voxel_id` | M | int | Unique within the snapshot. |
+| `grain_id` | O (conditional) | int | Present when the `grains` array is included; absent otherwise. |
+| `phase_id` | M | int | Phase of the voxel (denormalized so the phase is available without the grains array). |
+| `centroid_coordinates` | M | [x, y, z] | Centroid position in the dataset length unit. |
+| `voxel_index` | M | [i, j, k] | Integer grid indices. |
 | `orientation` | M | [φ1, Φ, φ2] | Bunge–Euler angles in the dataset angle unit. |
-| `voxel_volume` | O | number | Voxel volume. |
+| `voxel_volume` | O | number | Voxel volume in the dataset volume unit. |
 | `deformation_gradient` | O | 3×3 | F at the voxel (row-major). |
 | `first_piola_kirchhoff_stress` | O | 3×3 | P at the voxel (row-major), dataset stress unit. |
-| `strain` | O | 3×3 | Strain measure at the voxel. |
-| `IPFcolor_(1 0 0)` | O | [R, G, B] | Visualization data. |
 
 Grain and voxel records are open: further state or visualization quantities may be added at either level as a workflow requires.
 
@@ -119,25 +112,13 @@ Grain and voxel records are open: further state or visualization quantities may 
 
 # Identifiers
 
-`microstructure_state_id = "S_" + SHA-256(canonical serialization of the state-defining content)[:8]`
-
-The state-defining content is the grid, and the identity, phase, orientation and geometry of every grain and voxel; `time_point`, lineage, field quantities and extension fields are excluded, so quantities recorded for other purposes do not alter the identity of a state. Floats are rounded to 6 significant figures before hashing. The full convention, including a worked example and the collision policy, is in [docs/identifier_convention.md](docs/identifier_convention.md). It is implemented in Kanapy (`create_microstructure_identifier`) and, for independent verification, in `scripts/microstructure_tools.py`.
+Each complete data object carries its own schema-level identifier; within the module, a distinct `microstructure_state_id` attaches to individual snapshots. Both are generated as deterministic hashes. The `microstructure_state_id` is computed from the content of the snapshot itself — the grid together with the grain- and voxel-level fields that define the state — under a fixed serialization convention, and written as `S_` followed by the leading eight hexadecimal characters of a SHA-256 digest. Because the identifier is derived from the content of the state, identical states yield identical identifiers wherever they occur.
 
 ---
 
-# Validation
+# JSON Schema
 
-```bash
-pip install jsonschema            # >= 4.18 (JSON Schema draft 2020-12)
-
-# validate a snapshot array or a complete MiMeDat data object
-python scripts/microstructure_tools.py validate path/to/object.json
-
-# recompute identifiers and compare with the stored ones
-python scripts/microstructure_tools.py state-id path/to/object.json --check
-```
-
-`validate` checks the schema and, in addition, uniqueness of identifiers, referential integrity of `grain_id` and `parent_grain_id`, ordering of `time_point`, voxel count against grid dimensions, and stored `microstructure_state_id` values.
+The Microstructure Module schema is provided as `Microstructure_Module.json` (JSON Schema draft 2020-12, version 1.0.0). It defines the object hierarchy, required and optional fields, accepted data types and validation rules, and can be checked with any compatible JSON Schema validator.
 
 ---
 
@@ -145,50 +126,46 @@ python scripts/microstructure_tools.py state-id path/to/object.json --check
 
 | File | Description |
 |---|---|
-| [`examples/minimal_evolution_example.json`](examples/minimal_evolution_example.json) | 2×2×2 voxels, 2 grains, 3 snapshots: initial undeformed state (`S_cfb0ab2e`) → deformed state with F and P → recovered, regridded state (`S_f34becbd`) with grain lineage. Validates against schema 1.1.0. |
+| [`examples/minimal_evolution_example.json`](examples/minimal_evolution_example.json) | 2×2×2 voxels, 2 grains, 3 snapshots: initial undeformed state → deformed state with F and P → recovered, regridded state with grain lineage. |
 
-Full-scale data objects produced by the cold-rolling / tensile-testing demonstrator workflow (Kanapy → DAMASK → pyiron_workflow) are published separately; see the *Related resources* section.
-
----
-
-# Related resources
-
-| Resource | Location |
-|---|---|
-| Main MiMeDat schema (`microstructure_sensitive_mechanical_metadata_schema.json`) | https://github.com/Ronakshoghi/MiMeDat |
-| Demonstrator workflow (Kanapy, DAMASK, pyiron_workflow) | https://github.com/ICAMS/microstructure-workflows |
-| Demonstrator data objects | Zenodo, DOI to be added |
-| Kanapy | https://github.com/ICAMS/Kanapy |
-| DAMASK | https://damask-multiphysics.org |
+Full-scale data objects produced by the cold-rolling / tensile-testing demonstrator workflow (Kanapy → DAMASK → pyiron_workflow) are published separately (Zenodo, DOI to be added).
 
 ---
 
-# Related publication
+# Resources, citation, and contact
 
-Yousef Rezek, Ronak Shoghi, Alexander Hartmaier. *A modular workflow-centric schema for FAIR data objects capturing microstructure evolution and mechanical data.* Submitted to *Scientific Data* (2026).
+### Schema resources
 
-The module extends the workflow-centric data-object structure of R. Shoghi and A. Hartmaier, *Adv. Eng. Mater.* 27 (2025) 2401876, https://doi.org/10.1002/adem.202401876.
+- Main MiMeDat schema: https://github.com/Ronakshoghi/MiMeDat
+- Demonstrator workflow: https://github.com/ICAMS/microstructure-workflows
 
----
+### Related publications
 
-# Citation
+- Yousef Rezek, Ronak Shoghi, Alexander Hartmaier,
+  *A modular workflow-centric schema for FAIR data objects capturing microstructure evolution and mechanical data.*
+  Submitted to *Scientific Data*, 2026.
 
-If you use this schema, please cite the publication above and this repository (see [CITATION.cff](CITATION.cff)).
+- Ronak Shoghi and Alexander Hartmaier,
+  *A Workflow-Centric Approach to Generating FAIR Data Objects for Computationally Generated Microstructure-Sensitive Mechanical Data*,
+  Advanced Engineering Materials, 2025.
+  https://doi.org/10.1002/adem.202401876
 
----
+### Authors
 
-# Authors
+- Yousef Rezek
+- Alexander Hartmaier
 
-Yousef Rezek, Ronak Shoghi, Alexander Hartmaier
-ICAMS (Interdisciplinary Centre for Advanced Materials Simulation), Ruhr University Bochum, Germany
+**Organization:** ICAMS, Ruhr University Bochum, Germany
+
+**Contact:**
+
+- yousef.rezek@rub.de
 
 ---
 
 # License
 
-Copyright © Yousef Rezek, Ronak Shoghi and Alexander Hartmaier, 2025, 2026
+Copyright © Yousef Rezek and Alexander Hartmaier, 2025, 2026
 
-The schema, documentation and examples in this repository are licensed under a Creative Commons Attribution 4.0 International License [(CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/); see [LICENSE](LICENSE).
+This work is licensed under a Creative Commons Attribution 4.0 International License [(CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/); see [LICENSE](LICENSE).
 ![CC BY 4.0](https://i.creativecommons.org/l/by/4.0/88x31.png)
-
-The scripts in `scripts/` are provided under the same license and come with ABSOLUTELY NO WARRANTY.
