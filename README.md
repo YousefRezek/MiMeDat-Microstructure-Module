@@ -17,6 +17,42 @@ MiMeDat – Microstructure Module
 </p>
 
 ---
+## Resources, citation, and contact
+
+### Schema resources
+
+- Microstructure module:  
+  [Microstructure_Module.json](https://github.com/YousefRezek/MiMeDat-Microstructure-Module/blob/main/Microstructure_Module.json)
+
+- Main metadata schema:  
+  [microstructure_sensitive_mechanical_metadata_schema.json](https://github.com/Ronakshoghi/MiMeDat/blob/main/microstructure_sensitive_mechanical_metadata_schema.json)
+
+- Demonstrator workflow:  
+  https://github.com/ICAMS/microstructure-workflows
+
+### Related publications
+
+- Yousef Rezek, Ronak Shoghi, Alexander Hartmaier,
+  *A modular workflow-centric schema for FAIR data objects capturing microstructure evolution and mechanical data.*
+  Submitted to *Scientific Data*, 2026.
+
+- Ronak Shoghi and Alexander Hartmaier,
+  *A Workflow-Centric Approach to Generating FAIR Data Objects for Computationally Generated Microstructure-Sensitive Mechanical Data*,
+  Advanced Engineering Materials, 2025.
+  https://doi.org/10.1002/adem.202401876
+
+### Authors
+
+- Yousef Rezek
+- Alexander Hartmaier
+
+**Organization:** ICAMS, Ruhr University Bochum, Germany
+
+**Contact:**
+
+- yousef.rezek@rub.de
+
+---
 
 # Overview
 
@@ -129,37 +165,6 @@ The Microstructure Module schema is provided as `Microstructure_Module.json` (JS
 | [`examples/minimal_evolution_example.json`](examples/minimal_evolution_example.json) | 2×2×2 voxels, 2 grains, 3 snapshots: initial undeformed state → deformed state with F and P → recovered, regridded state with grain lineage. |
 
 Full-scale data objects produced by the cold-rolling / tensile-testing demonstrator workflow (Kanapy → DAMASK → pyiron_workflow) are published separately (Zenodo, DOI to be added).
-
----
-
-# Resources, citation, and contact
-
-### Schema resources
-
-- Main MiMeDat schema: https://github.com/Ronakshoghi/MiMeDat
-- Demonstrator workflow: https://github.com/ICAMS/microstructure-workflows
-
-### Related publications
-
-- Yousef Rezek, Ronak Shoghi, Alexander Hartmaier,
-  *A modular workflow-centric schema for FAIR data objects capturing microstructure evolution and mechanical data.*
-  Submitted to *Scientific Data*, 2026.
-
-- Ronak Shoghi and Alexander Hartmaier,
-  *A Workflow-Centric Approach to Generating FAIR Data Objects for Computationally Generated Microstructure-Sensitive Mechanical Data*,
-  Advanced Engineering Materials, 2025.
-  https://doi.org/10.1002/adem.202401876
-
-### Authors
-
-- Yousef Rezek
-- Alexander Hartmaier
-
-**Organization:** ICAMS, Ruhr University Bochum, Germany
-
-**Contact:**
-
-- yousef.rezek@rub.de
 
 ---
 
